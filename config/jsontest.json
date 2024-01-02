@@ -1,0 +1,22 @@
+{
+	"systemID": 268435456,
+"systemIP":"210.73.60.100",
+"mainCMD":415,
+	"subCMD":241,
+	"evidenceID": "1688889129asdon1298so",
+	"msgVersion":4096,
+	"submittime": "2020-08-01 08:00:00",
+	"data":{
+"objectHash": "12345624",
+		"objectSize": "1245624",
+		"objectSign": "12345624",
+		"title": "系统x敏感识别x文件存证记录",
+		"abstract": "系统x敏感识别x文件存证记录",
+		"keyWords": "敏感识别",
+		"category": "12-345624",
+"others": "12-345624",
+"recognizeResult":"识别结果异常"
+	},
+	"dataHash": "56e3be093f377b9d984eef02a982d852d1bce062fdb505bcf87df46141fd80aa",
+	"noncesign": "56e3be093f377b9d984eef02a982d852d1bce062fdb505bcf87df46141fd80aa"
+}

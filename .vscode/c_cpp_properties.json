@@ -1,0 +1,22 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/include/**",
+                "${workspaceFolder}/include/json/**",
+                "${workspaceFolder}/include/simpleIni",
+                "${workspaceFolder}/include/DM"
+            ],
+            "defines": [],
+            "cStandard": "c11",
+            "cppStandard": "c++11",
+            "intelliSenseMode": "linux-gcc-x64",
+            "compilerPath": "/usr/bin/g++",
+            "compilerArgs": [
+                ""
+            ]
+        }
+    ],
+    "version": 4
+}
