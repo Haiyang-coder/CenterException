@@ -3,25 +3,25 @@
 #include "json.h"
 #include <iostream>
 #include <string>
-#include <map>
-#include "DataInfoBase.h"
+#include<map>
+#include"DataInfoBase.h"
 
-class RequstJsonData : public DataInfoBase
+class RequstJsonData :public DataInfoBase
 {
 
 public:
     RequstJsonData();
     // 显示数据的函数
-    virtual void DisplayData();
-    // 将json字符串转成对象（赋值）
-    virtual bool TurnStr2Obj(const char *jsonString);
-    // 获取整个类的插入语句
-    virtual void GetInserDataInOrder(std::string &strData) const;
+    void DisplayData();
+    //将json字符串转成对象（赋值）
+    bool TurnStr2Obj(const char *jsonString);
+    //获取整个类的插入语句
+    void GetInserDataInOrder(std::string& strData) const;
 
 private:
     // 用于将 Json::Value 中的值赋给 JsonData 对象
     void assignValues(const Json::Value &root);
-
+    
 public:
     uint32_t systemID;
     std::string systemIP;
@@ -33,7 +33,6 @@ public:
 
     struct Data
     {
-    public:
         std::string objectHash;
         std::string objectSize;
         std::string objectSign;
@@ -47,6 +46,7 @@ public:
 
     std::string dataHash;
     std::string noncesign;
+
 };
 
 #endif

@@ -1,9 +1,4 @@
 #include "Packet.h"
-#include <iostream>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <iostream>
-#include <iomanip>
 #define BUFFER_SIZE 2048000
 
 /// @brief 构造数据包
@@ -11,56 +6,42 @@
 /// @param nSize 构造成功返回：数据包长度 失败：返回0
 CPacket::CPacket(const char *pData, size_t &nSize)
 {
-	std::cout << "开始构造数据包" << std::endl;
 	// TODO目前还有一个缺陷，没有认证和校验，如果校验不通过就丢弃这个包
 	size_t i = 0;
-	uint16_t temp = 0;
 	for (; i < nSize; i++)
 	{
-		memcpy(&temp, pData + i, 2);
-		uint8_t byte1 = static_cast<uint8_t>(temp >> 8);   // 获取第一个字节
-		uint8_t byte2 = static_cast<uint8_t>(temp & 0xFF); // 获取第二个字节
-		if (byte1 == 0x00 && byte2 == 0x01)
+		if (*(uint16_t *)(pData + i) == 0x0001)
 		{
-			memcpy(&m_sHead, &temp, 2);
+			m_sHead = *(uint16_t *)(pData + i);
 			i += 2;
-			std::cout << "找到了包头" << std::endl;
-			std::cout << "现在是第" << i + 1 << "个字节" << std::endl;
 			break;
 		}
 	}
 
-	memcpy(&m_cmdType, pData + i, 2);
-	i += 2;
-	std::cout << "现在是第" << i + 1 << "个字节" << std::endl;
-	memcpy(&m_itemType, pData + i, 2);
-	i += 2;
-	std::cout << "现在是第" << i + 1 << "个字节" << std::endl;
-	memcpy(&m_msgVersion, pData + i, 2);
-	i += 2;
-	std::cout << "现在是第" << i + 1 << "个字节" << std::endl;
-	memcpy(&m_cypherModel, pData + i, 2);
-	i++;
-	std::cout << "现在是第" << i + 1 << "个字节" << std::endl;
-	memcpy(&m_veryfyModel, pData + i, 2);
-	i++;
-	std::cout << "现在是第" << i + 1 << "个字节" << std::endl;
-	memcpy(&m_saveCmd, pData + i, 2);
-	i += 4;
-	std::cout << "现在是第" << i + 1 << "个字节" << std::endl;
-	std::cout << "i = " << i << std::endl;
-	memcpy(&m_cmdType, pData + i, 2);
-	for (int j = i; j < i + 4; ++j)
+	// 构不成一个完成的数据包
+	if (i + 32 > nSize)
 	{
-		std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(static_cast<unsigned char>(pData[j])) << " ";
+		nSize = 0;
+		return;
 	}
-	m_DataLength = htonl(*(uint32_t *)(pData + i));
+
+	m_cmdType = *(uint16_t *)(pData + i);
+	i += 2;
+	m_itemType = *(uint16_t *)(pData + i);
+	i += 2;
+	m_msgVersion = *(uint16_t *)(pData + i);
+	i += 2;
+	m_cypherModel = *(unsigned char *)(pData + i);
+	i++;
+	m_veryfyModel = *(unsigned char *)(pData + i);
+	i++;
+	m_saveCmd = *(uint32_t *)(pData + i);
 	i += 4;
-	// 加上数据部分之后无法构成一个包
-	std::cout << "转换字节序之后是：" << std::to_string(m_DataLength) << std::endl;
-	if (m_DataLength > nSize)
+	m_DataLength = *(uint32_t *)(pData + i);
+	i += 4;
+	if (m_DataLength + i + 16 > nSize)
 	{
-		std::cout << "构不成一个完成的数据包22222" << std::endl;
+		// 加上数据部分之后无法构成一个包
 		nSize = 0;
 		return;
 	}

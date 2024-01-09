@@ -6,13 +6,26 @@
 #include <iostream>
 #include "SimpleIni.h"
 #include <functional>
+#include <thread>
+#include <fineftp/server.h>
 
 #define D_WORK_THREADS_NUM 5
 #define TASK_QUEUE_MAX_SIZE 2048
+#ifdef WIN32
+const std::string local_root = "C:\\"; // The backslash at the end is necessary!
+#else                                  // WIN32
+const std::string local_root = "/dm8";
+#endif                                 // WIN32
 int main()
 {
 
-    // pthread_t epoll_pths[D_EPOLL_THREADS_NUM];
+    // 初始化ftp服务器
+    fineftp::FtpServer server(212);
+    server.addUserAnonymous(local_root, fineftp::Permission::All);
+    server.addUser("MyUser", "MyPassword", local_root, fineftp::Permission::ReadOnly);
+    server.addUser("Uploader", "12345", local_root, fineftp::Permission::DirList | fineftp::Permission::DirCreate | fineftp::Permission::FileWrite | fineftp::Permission::FileAppend);
+    server.start(4);
+
     //  初始化服务端的通信套接字
     CSeverSocket socket;
     bool ret = socket.InitSockEnv();

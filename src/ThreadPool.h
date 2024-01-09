@@ -24,7 +24,7 @@ public:
     void addTask(TaskNode task);
     // 获取忙线程的个数
     int getBusyNumber();
-    // 获取活着的线程个数/*
+    // 获取活着的线程个数
     int getAliveNumber();
     void destorypools();
 

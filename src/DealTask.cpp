@@ -1,7 +1,7 @@
 #include "DealTask.h"
 CDealTask::CDealTask(CThreadSafeQueue<CPacket> *taskQueue) : m_ptaskQueue(taskQueue)
 {
-    m_pthreadPool = new CThreadPool(D_WORK_THREADS_MIN_NUM, D_WORK_THREADS_MAX_NUM);
+    m_pthreadPool = &CThreadPool::getInstance();
 }
 
 CDealTask::~CDealTask()
@@ -17,7 +17,7 @@ CDealTask::~CDealTask()
 int CDealTask::StartDealTask()
 {
     // RAII开启一个线程
-    m_thread = std::thread(&CDealTask::DealTaskThread,this);
+    m_thread = std::thread(&CDealTask::DealTaskThread, this);
     return 0;
 }
 
@@ -37,29 +37,100 @@ int CDealTask::DealTaskThread()
             PRINT_ERROR(ret, "DecSm4Data 失败");
         }
         // 2. 将解密的数据转换成类
-        RequstJsonData jsonData;
-        ret = jsonData.TurnStr2Obj(strDataDec.c_str());
+        switch (pack.m_cmdType)
+        {
+        case 0x4120:
+        {
+            CDelData jsonData;
+            ret = jsonData.TurnStr2Obj(strDataDec.c_str());
+            ret = SaveDataInDB(jsonData);
+        }
+        case 0x4121:
+        {
+            CDelCopyData jsonData;
+            ret = jsonData.TurnStr2Obj(strDataDec.c_str());
+            ret = SaveDataInDB(jsonData);
+        }
+        case 0x4020:
+        {
+            CNoticData jsonData;
+            ret = jsonData.TurnStr2Obj(strDataDec.c_str());
+            ret = SaveDataInDB(jsonData);
+        }
+        case 0x4021:
+        {
+            CNotifyAckData jsonData;
+            ret = jsonData.TurnStr2Obj(strDataDec.c_str());
+            ret = SaveDataInDB(jsonData);
+        }
+        case 0x4221: // 未按删除意图对信息进行对照删除异常数据存证信息
+        {
+            CUnCpareDelData jsonData;
+            ret = jsonData.TurnStr2Obj(strDataDec.c_str());
+            ret = SaveDataInDB(jsonData);
+        }
+        case 0x4222: // 未按删除触发条件对信息进行删除异常数据存证信息
+        {
+            CUnTrigerDelData jsonData;
+            ret = jsonData.TurnStr2Obj(strDataDec.c_str());
+            ret = SaveDataInDB(jsonData);
+        }
+        case 0x4223: // 删除通知与确认完备性异常数据存证信息
+        {
+            UnNotificationCfirm jsonData;
+            ret = jsonData.TurnStr2Obj(strDataDec.c_str());
+            ret = SaveDataInDB(jsonData);
+        }
+        case 0x4224: // 删除一致性无效异常数据存证信息
+        {
+            CConsistData jsonData;
+            ret = jsonData.TurnStr2Obj(strDataDec.c_str());
+            ret = SaveDataInDB(jsonData);
+        }
+        case 0x4225: // 删除方法合规性异常数据存证信息
+        {
+            CAlgStandardDiff jsonData;
+            ret = jsonData.TurnStr2Obj(strDataDec.c_str());
+            ret = SaveDataInDB(jsonData);
+        }
+        case 0x4226: // 删除副本不可恢复性异常数据存证信息
+        {
+            UnRecoverable jsonData;
+            ret = jsonData.TurnStr2Obj(strDataDec.c_str());
+            ret = SaveDataInDB(jsonData);
+        }
+        case 0x4227: // 删除算法失效异常数据存证信息
+        {
+            UnEfficaAlg jsonData;
+            ret = jsonData.TurnStr2Obj(strDataDec.c_str());
+            ret = SaveDataInDB(jsonData);
+        }
+        case 0x4228: // 副本删除完备性异常数据存证信息
+        {
+            DelDupComple jsonData;
+            ret = jsonData.TurnStr2Obj(strDataDec.c_str());
+            ret = SaveDataInDB(jsonData);
+        }
+        case 0x4229: // 整体删除无效异常数据存证信息
+        {
+            CmpliDelFail jsonData;
+            ret = jsonData.TurnStr2Obj(strDataDec.c_str());
+            ret = SaveDataInDB(jsonData);
+        }
+        default:
+            LOG(LOG_ERROR, "不清楚的包来源和指令");
+            break;
+        }
+
         if (ret != SUCCESS)
         {
             PRINT_ERROR(ret, "TurnStr2Obj 失败");
         }
-        // 3. 根据数据中的密令码来执行
-        //  switch (jsonData.mainCMD)
-        //  {
-        //  case 0:
 
-        //     break;
-
-        // default:
-        //     break;
-        // }
-        // 这里就默认是存入数据库了
-        ret = SaveDataInDB(jsonData);
         if (ret < 0)
         {
             PRINT_ERROR(ret, "SaveDataInDB 失败");
         }
-
     }
     return 0;
 }

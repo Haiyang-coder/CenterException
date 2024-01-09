@@ -3,7 +3,7 @@
 CSeverSocket::CSeverSocket()
     : m_serv_fd(0)
 {
-    m_pthreadPool = new CThreadPool(D_WORK_THREADS_MIN_NUM, D_WORK_THREADS_MAX_NUM);
+    m_pthreadPool = &CThreadPool::getInstance();
 }
 
 /// @brief 建立tcp的监听
@@ -106,7 +106,6 @@ bool CSeverSocket::initClientEnv()
 CSeverSocket::~CSeverSocket()
 {
     CloseSocket();
-    delete m_pthreadPool;
 }
 
 /// @brief 关闭服务端的连接socket

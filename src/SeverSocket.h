@@ -8,13 +8,13 @@
  */
 #pragma once
 #include <list>
-#include "Packet.h"
+#include "./data/Packet.h"
 #include <sys/socket.h>
 #include <sys/epoll.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include "ThreadPool.h"
+#include "./ThreadPool/ThreadPool.h"
 #include "DealTask.h"
 #include <mutex>
 #include "ThreadSafeQueue.h"
