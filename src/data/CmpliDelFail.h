@@ -7,7 +7,7 @@
 class CmpliDelFail : public DataInfoBase
 {
 public:
-    CmpliDelFail();
+    CmpliDelFail(const char *jsonString);
 
     // 用于显示数据
     void DisplayData();
@@ -17,10 +17,6 @@ public:
 
     // 用于生成插入数据库的SQL语句
     void GetInserDataInOrder(std::string &strData) const;
-
-private:
-    // 将JSON值分配给对象成员的内部方法
-    void assignValues(const Json::Value &root);
 
 private:
     // 内部结构体表示content字段

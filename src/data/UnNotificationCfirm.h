@@ -7,7 +7,7 @@
 class UnNotificationCfirm : public DataInfoBase
 {
 public:
-    UnNotificationCfirm();
+    UnNotificationCfirm(const char *jsonString);
 
     // 方法用于显示数据
     void DisplayData();
@@ -17,10 +17,6 @@ public:
 
     // 方法用于生成插入数据库的SQL语句
     void GetInserDataInOrder(std::string &strData) const;
-
-private:
-    // 内部方法用于将JSON值分配给对象成员
-    void assignValues(const Json::Value &root);
 
 private:
     // 内部结构体表示content字段

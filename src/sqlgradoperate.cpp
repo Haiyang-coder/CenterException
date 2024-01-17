@@ -17,10 +17,9 @@ CSqlGradOperate::CSqlGradOperate()
         std::cout << "加载文件：" << SYSTEM_INI_FILE_PATH << "失败了" << std::endl;
         exit(ret);
     }
-    // 将配置文件中的配置读进内存
+    //  将配置文件中的配置保存起来
     m_pstIniHead = GetDatabaseConfigIni(PATH_DATABASE_CONFIG);
-    // 开始按照配置初始化数据库
-    InitDataBase();
+    m_path = m_systemIni.GetValue("ftp", "CSV_PATH", "/dm8/test");
 }
 
 CSqlGradOperate::~CSqlGradOperate()
@@ -442,7 +441,7 @@ int CSqlGradOperate::InitDMShemaAndTable()
  * 参数：无
  * 返回值：无
  **/
-void CSqlGradOperate::InitDataBase(void)
+int CSqlGradOperate::InitDataBase(void)
 {
     int iTableSize = 0;
     char acTableName[D_NSP_PDCSMCS_TICS_CLOMN_NAME_LEN] = {0};
@@ -454,7 +453,7 @@ void CSqlGradOperate::InitDataBase(void)
     if (pstIniSchema == NULL)
     {
         printf("未找到schema节\n");
-        exit(0);
+        return -1;
     }
 
     // 获取表的数目
@@ -474,7 +473,7 @@ void CSqlGradOperate::InitDataBase(void)
         if ((pstIniTable = GetDbSection(m_pstIniHead, GetItemString(pstIniSchema, acTableName))) == NULL)
         {
             printf("%s未找到%s配置项", "schema", acTableName);
-            exit(0);
+            return -1;
         }
 
         iColumnSize = (unsigned short)GetItemInt(pstIniTable, "SIZE");
@@ -494,7 +493,7 @@ void CSqlGradOperate::InitDataBase(void)
             if (sscanf(GetItemString(pstIniTable, acColumnName), "%[^#]%*[#]%s", (char *)(pstDataMap->aucColumnName), (char *)(pstDataMap->aucType)) != 2)
             {
                 printf("F_NSP_PDCSMCS_ini_get_string(pstIniTable,acColumnName)配置参数不正确\n");
-                return;
+                return -1;
             }
             if ((strncmp((const char *)pstDataMap->aucType, "VARCHAR", 7) == 0) || (strncmp((const char *)pstDataMap->aucType, "CHAR", 4) == 0))
             {
@@ -514,6 +513,7 @@ void CSqlGradOperate::InitDataBase(void)
         // printf("pstTable: %s\n",pstTable);
     }
 }
+
 /*
  * 功能：获取指定的节
  * 参数：
@@ -589,6 +589,7 @@ int CSqlGradOperate::BindSql2Exe(DMStmt &stDmStmt, const char *sql)
     }
     return SH_LOD_SUCCESS;
 }
+
 /*
  *功能：实现数据库的插入
  *参数：
@@ -607,6 +608,128 @@ int CSqlGradOperate::DataInsert(const char *pcQuery)
     DMStmt stDmStmt;
     int ret = BindSql2Exe(stDmStmt, pcQuery);
     return ret;
+}
+
+int CSqlGradOperate::SetDbBackup()
+{
+    int ret = -1;
+    // 设置数据库的归档，开启作业
+    ret = SetBackUpDB();
+    if (ret != 0)
+    {
+        return ret;
+    }
+    // 设置完全备份
+    ret = SetCompliBackUp();
+    if (ret != 0)
+    {
+        return ret;
+    }
+    // 设置增量备份
+    ret = SetAddBackUp();
+    if (ret != 0)
+    {
+        return ret;
+    }
+    return ret;
+}
+
+/// @brief
+/// @param tableName 表名字
+/// @param timeStart 数据提交时间（开始）
+/// @param timeEnd 数据提交时间（结束）
+/// @param dataAll 出参 查询出来的结果
+/// @return 0成功
+int CSqlGradOperate::GetDataBySubmitTime(const char *tableName, const char *timeStart, const char *timeEnd, CDbData &dataAll)
+{
+    DMStmt stDmStmt; // 本次数据库的操作句柄
+    // 初始化要查询的数据信息（得知行数，列数，列明，列数据类型）
+    int ret = InitDbData(tableName, dataAll);
+    if (ret < 0)
+    {
+        PRINT_ERROR(ret, "初始化查询数据类，失败");
+    }
+    //  组装查询语句
+    std::string ccSqlselectAll;
+    GetSqlByTime(tableName, timeStart, timeEnd, ccSqlselectAll);
+    // 执行查询语句
+    int ret = BindSql2Exe(stDmStmt, ccSqlselectAll.c_str());
+    if (ret != SH_LOD_SUCCESS)
+    {
+        PRINT_ERROR(ret, "执行查询语句失败了");
+        return ret;
+    }
+    // 获取查询的结果
+    ret = GetDataByExcuteSql(&stDmStmt, dataAll);
+    if (ret != SUCCESS)
+    {
+        PRINT_ERROR(ret, "获取查询的结果失败了");
+        return FAILED;
+    }
+    return SUCCESS;
+}
+
+/// @brief 将数据以csv的格式存到指定的文件夹
+/// @param dataAll 入参 数据
+/// @param fullName 入参 保存的路径（包括文件名）
+/// @return 0成功
+int CSqlGradOperate::SavaDataAsCsv(const CDbData &dataAll, std::string fullName)
+{
+    int lineSize = dataAll.iLineSize; // 行数
+    int cloSize = dataAll.iClomuSize; // 列数
+    // 获取输出路径的目录部分
+    size_t lastSlashPos = m_path.find_last_of('/');
+    std::string outputDir = (lastSlashPos != std::string::npos) ? m_path.substr(0, lastSlashPos) : "";
+
+    // 如果目录不存在，新建目录
+    if (!outputDir.empty() && access(outputDir.c_str(), F_OK) != 0)
+    {
+        if (mkdir(outputDir.c_str(), 0777) != 0)
+        {
+            std::cerr << "Error creating directory: " << outputDir << std::endl;
+            return;
+        }
+    }
+    // 打开文件操作流开始写入数据
+    std::ofstream csvFile(fullName);
+
+    // 先写入标题信息
+    for (size_t i = 0; i < cloSize; i++)
+    {
+        if (i == cloSize - 1)
+        {
+            csvFile << dataAll.vecCloName.at(i) << "\n";
+        }
+        csvFile << dataAll.vecCloName.at(i) << ",";
+    }
+    // 按照数据类型写入剩余的所有数据
+    for (size_t i = 0; i < lineSize; i++)
+    {
+        for (size_t j = 0; j < cloSize; j++)
+        {
+            if (dataAll.vecType.at(j) == TYPE_INT)
+            {
+                if (j == cloSize - 1)
+                {
+                    csvFile << dataAll.vecCloName.at(i * cloSize + j) << "\n";
+                }
+                csvFile << dataAll.vecDbRow.at(i * cloSize + j).piData << ",";
+            }
+            else if (dataAll.vecType.at(j) == TYPE_STRING)
+            {
+                if (j == cloSize - 1)
+                {
+                    csvFile << "\"" << dataAll.vecDbRow.at(i * cloSize + j).strData << "\""
+                            << "\n";
+                }
+                csvFile << "\"" << dataAll.vecDbRow.at(i * cloSize + j).strData << "\""
+                        << ",";
+            }
+        }
+    }
+    // 关闭文件流
+    csvFile.close();
+    return 0;
 }
 
 /*
@@ -794,9 +917,6 @@ int CSqlGradOperate::SetBackUpDB()
         LOG(LOG_ERROR, "初始化作业环境 失败");
         return ret;
     }
-
-    // 6.开启备份作业，设置备份策略：总备份和差分备份，我先设置一下总备份
-
     return 0;
 }
 
@@ -945,4 +1065,130 @@ int CSqlGradOperate::UpdateAddBackUp()
         return ret;
     }
     return SUCCESS;
+}
+
+int CSqlGradOperate::InitDbData(const char *tableName, CDbData &data)
+{
+    St_NSP_PDCSMCS_DataTable *tableTemp; // 对应表的信息
+    // 1. 获取总行数
+    unsigned short iRowNumber = 0;
+    int iRet = GetPageLines(tableName, iRowNumber);
+    if (iRet != SH_LOD_SUCCESS)
+    {
+        PRINT_ERROR(iRet, "GetPageLines 失败");
+        return iRet;
+    }
+    data.iLineSize = iRowNumber;
+
+    //  2. 在m_pstTableMap中查找对应的表
+
+    for (int i = 0; i < m_pstTableMap->usSize; i++)
+    {
+        if (strcmp((char *)(m_pstTableMap->pstTable[i]->aucTableName), tableName) == 0)
+        {
+            tableTemp = m_pstTableMap->pstTable[i];
+            break;
+        }
+        if (m_pstTableMap->usSize == i)
+        {
+            PRINT_ERROR(-2, "没有找到指定的表名");
+            return -1;
+        }
+    }
+
+    // 3. 获得表的列数,以及每一列的数据类型
+    data.iClomuSize = tableTemp->usSize;
+    // 获得所有列的名字，以及他们的数据类型
+    for (int i = 0; i < tableTemp->usSize; i++)
+    {
+        data.vecCloName.push_back(std::string((char *)tableTemp->astMap[i].aucColumnName));
+        if (tableTemp->astMap[i].usType == TYPE_INT)
+        {
+            data.vecType.push_back(TYPE_INT);
+        }
+        else
+        {
+            data.vecType.push_back(TYPE_STRING);
+        }
+    }
+    return 0;
+}
+
+/// @brief 获得按照时间范围查找数据的sql语句
+/// @param tableName
+/// @param timeStart
+/// @param timeEnd
+/// @param sql
+/// @return
+int CSqlGradOperate::GetSqlByTime(const char *tableName, const char *timeStart, const char *timeEnd, std::string &sql)
+{
+    std::string strSql = "SELECT * FROM \"TEST_EXCEPTION\".\"" +
+                         std::string(tableName) +
+                         "\" WHERE SUBMITTIME BETWEEN '" +
+                         std::string(timeStart) +
+                         "' AND '" + std::string(timeEnd) + "';";
+    sql = strSql;
+    LOG(LOG_DEBUG, "组合完毕的sql是:" + strSql);
+    return 0;
+}
+
+/// @brief 将查询结果取出来
+/// @param stmt 本粗查询使用的句柄
+/// @param data 出参 将结果都放到这个容器里面
+/// @return 0成功
+int CSqlGradOperate::GetDataByExcuteSql(DMStmt *stDmStmt, CDbData &data)
+{
+    // 开始为数据申请空间
+    int iRet = 0;
+    int *piData = nullptr;
+    piData = (int *)malloc(sizeof(int) * data.iClomuSize);
+    memset(piData, 0, sizeof(int) * data.iClomuSize);
+    char **ppcData = (char **)malloc(sizeof(char *) * data.iClomuSize);
+    for (int i = 0; i < data.iClomuSize; i++)
+    {
+        ppcData[i] = (char *)malloc(sizeof(char) * MAX_SIZE);
+        memset(ppcData[i], 0, sizeof(char) * MAX_SIZE);
+    }
+    long long *pllBindClomn = (long long *)malloc(data.iClomuSize * sizeof(long long));
+    for (int inumber = 0; inumber < data.iClomuSize; inumber++)
+    {
+        if (data.vecType.at(inumber) == TYPE_INT)
+        {
+            iRet = databaseBindColumn(stDmStmt, inumber + 1, DSQL_C_SLONG, &piData[inumber],
+                                      sizeof(piData[inumber]), &pllBindClomn[inumber]);
+        }
+        else if (data.vecType.at(inumber) == TYPE_STRING)
+        {
+            iRet = databaseBindColumn(stDmStmt, inumber + 1, DSQL_C_NCHAR, ppcData[inumber],
+                                      MAX_SIZE, &pllBindClomn[inumber]);
+        }
+        if (iRet < 0)
+        {
+            dm_free_stmt(stDmStmt);
+            return SH_SQL_BINDCLOMN_ERROR;
+        }
+    }
+
+    // get data
+    for (int i = 0; i < data.iLineSize; i++)
+    {
+        if (databaseFetch(stDmStmt) == DSQL_NO_DATA)
+        {
+            break;
+        }
+        for (int inumber = 0; inumber < data.iClomuSize; inumber++)
+        {
+            CDbRowData dataRow(piData[inumber]);
+            data.vecDbRow.push_back(dataRow);
+        }
+    }
+    // close handle
+    if (dm_free_stmt(stDmStmt))
+    {
+        dm_free_stmt(stDmStmt);
+        return SH_SQL_BINDCLOMN_ERROR;
+    }
+    delete[] ppcData;
+    delete[] piData;
+    return 0;
 }

@@ -8,6 +8,7 @@
 #include <functional>
 #include <thread>
 #include <fineftp/server.h>
+#include "sqlGradoperate.h"
 
 #define D_WORK_THREADS_NUM 5
 #define TASK_QUEUE_MAX_SIZE 2048
@@ -26,6 +27,10 @@ int main()
     server.addUser("Uploader", "12345", local_root, fineftp::Permission::DirList | fineftp::Permission::DirCreate | fineftp::Permission::FileWrite | fineftp::Permission::FileAppend);
     server.start(4);
 
+    // 初始化线程安全的任务队列
+    // 所有的请求都会放到这个队列中排队执行
+    CThreadSafeQueue<dataInQueue> taskQueue(TASK_QUEUE_MAX_SIZE);
+
     //  初始化服务端的通信套接字
     CSeverSocket socket;
     bool ret = socket.InitSockEnv();
@@ -34,14 +39,8 @@ int main()
         perror("InitSockEnv function error!");
         exit(-1);
     }
-    // 初始化线程安全的任务队列
-    CThreadSafeQueue<CPacket> taskQueue(TASK_QUEUE_MAX_SIZE);
-    // 初始化任务处理模块
-    CDealTask dealTask(&taskQueue);
-    // 创建任务处理线程
-    dealTask.StartDealTask();
 
-    // 创建accept connect线程
+    // 创建接收连接线程
     std::vector<std::thread> vectThread;
     try
     {
@@ -58,7 +57,7 @@ int main()
         exit(-1);
     }
 
-    // 创建处理EPOLLIN线程
+    // 创建接收数据线程
     for (int i = 0; i < D_EPOLL_THREADS_NUM - 1; i++)
     {
         try
@@ -76,6 +75,36 @@ int main()
         }
     }
 
+    // 初始化数据库
+    CSqlGradOperate sqlOpera;
+    if (sqlOpera.InitDataBase() < 0)
+    {
+        PRINT_ERROR(-1, "初始化数据库失败，退出程序");
+        exit(-1);
+    }
+    // 设置数据的全备份和增量备份
+    if (sqlOpera.SetDbBackup() < 0)
+    {
+        PRINT_ERROR(-1, "设置数据库备份出错，退出");
+        exit(-1);
+    }
+
+    // 初始化任务处理模块
+    CDealTask dealTask(&taskQueue);
+    if (dealTask.SetSocket(&socket) != 0)
+    {
+        PRINT_ERROR(-1, "设置通信模块出错，退出");
+        exit(-1);
+    }
+    if (dealTask.SetSqlCtl(&sqlOpera) != 0)
+    {
+        PRINT_ERROR(-1, "设置数据库出错，退出");
+        exit(-1);
+    }
+    // 创建任务处理线程
+    dealTask.StartDealTask();
+
+    // 安全退出线程
     for (size_t i = 0; i < vectThread.size(); ++i)
     {
         if (vectThread[i].joinable())

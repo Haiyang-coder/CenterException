@@ -9,14 +9,11 @@
 class CUnCpareDelData : public DataInfoBase
 {
 public:
-    CUnCpareDelData(); // 构造函数
+    CUnCpareDelData(const char *jsonString); // 构造函数
 
     void DisplayData();                                   // 显示数据
     bool TurnStr2Obj(const char *jsonString);             // 将字符串转换成对象
     void GetInserDataInOrder(std::string &strData) const; // 获取插入数据库的SQL语句
-
-private:
-    void assignValues(const Json::Value &root); // 分配数值
 
 public:
     struct Data

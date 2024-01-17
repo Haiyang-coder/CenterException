@@ -10,7 +10,7 @@
 class CDelData : public DataInfoBase
 {
 public:
-    CDelData();
+    CDelData(const char *jsonString);
 
     // 显示数据的函数
     virtual void DisplayData();
@@ -21,13 +21,7 @@ public:
     // 获取整个类的插入语句
     virtual void GetInserDataInOrder(std::string &strData) const;
 
-private:
-    // 用于将 Json::Value 中的值赋给 JsonData 对象
-    void assignValues(const Json::Value &root);
-
 public:
-   
-
     struct Data
     {
         uint16_t DataType;
@@ -40,8 +34,6 @@ public:
             std::string timeout;
         } content;
     } data;
-
-   
 };
 
 #endif

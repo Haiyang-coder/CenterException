@@ -9,13 +9,10 @@
 class CNoticData : public DataInfoBase
 {
 public:
-    CNoticData();
+    CNoticData(const char *jsonString);
     void DisplayData();
     bool TurnStr2Obj(const char *jsonString);
     void GetInserDataInOrder(std::string &strData) const;
-
-private:
-    void assignValues(const Json::Value &root);
 
 public:
     struct Data

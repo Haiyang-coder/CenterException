@@ -7,7 +7,7 @@
 class DelDupComple : public DataInfoBase
 {
 public:
-    DelDupComple();
+    DelDupComple(const char *jsonString);
 
     // Method for displaying data
     void DisplayData();
@@ -17,10 +17,6 @@ public:
 
     // Method for generating SQL statement for database insertion
     void GetInserDataInOrder(std::string &strData) const;
-
-private:
-    // Internal method for assigning JSON values to object members
-    void assignValues(const Json::Value &root);
 
 private:
     // Internal struct representing the content field

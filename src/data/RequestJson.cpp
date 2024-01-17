@@ -1,6 +1,6 @@
 #include "RequestJson.h"
 
-RequstJsonData::RequstJsonData() : DataInfoBase()
+RequstJsonData::RequstJsonData() : DataInfoBase("dd")
 {
 }
 

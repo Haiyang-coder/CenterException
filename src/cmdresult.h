@@ -9,20 +9,9 @@
 // conmmon use
 #define MAX_SIZE 1024
 
-// // 每一页最大的显示行数
-// #define PAGE_ROWS_MAX 20
-// #define PAGE_COLU_MAX 40
-
 // 数据库数据类型
 #define TYPE_INT 2
 #define TYPE_STRING 4
-
-// //最大行数据长度
-// #define D_NSP_TDYTH_LINE_SIZE   2048
-// #define D_NSP_FILE_SIZE			8192
-// #define D_NSP_MSG_BUFFER_LEN	128 * 1024
-// #define D_NSP_PACK_LEN			1024 * 1024			//这个长度是否过大???
-// #define D_NSP_TDYTH_CONFIG_FILE_NAME	256
 
 //
 /***********************读取数据库需要的宏***************************************/
@@ -172,38 +161,6 @@ struct St_NSP_PDCSMCS_SectionIni
 	char acSectionName[D_NSP_PDCSMCS_TICS_BUF_LEN];
 	struct Key_Value *pstKeyValue;
 	struct St_NSP_PDCSMCS_SectionIni *pstNextSection;
-};
-
-// 发送给前台的表信息
-struct DataBase_Table_list
-{
-	unsigned int size;
-	char tableName[32][64];
-};
-
-// 按钮中发送给后台的信息
-typedef struct infoFromUi
-{
-	int iCurrentPage;	 // 当前页码
-	int iTaskID;		 // 你的目的是
-	char key[64];		 // 关键字
-	char value[64];		 // 关键字的值
-	char tableName[256]; // 表名称
-} ST_NSP_IOTC_USMRS_COORDINATE;
-
-// 传流转路径的数据结构
-typedef struct dataPath
-{
-	char name[64];			  // systemid
-	unsigned int childNumber; // 子节点的数量
-	dataPath **childPoint;	  // 子节点指针
-} ST_DATA_PATH;
-
-// 要查询的字段
-struct dataForSearch
-{
-	unsigned int size; // 要查询的字段数量
-	char dataName[64][64];
 };
 
 #endif // CMDRESULT_H

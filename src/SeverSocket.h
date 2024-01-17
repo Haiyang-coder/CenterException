@@ -56,7 +56,21 @@ struct dataEpollRecv
 		taskqueue = taskq;
 	};
 };
-
+/// @brief 压入工作队列的参数
+struct dataInQueue
+{
+	dataInQueue()
+	{
+		recv_fd = 0;
+	}
+	dataInQueue(int re_fd, CPacket data)
+	{
+		recv_fd = re_fd;
+		pack = data;
+	}
+	int recv_fd; // 接收套接字
+	CPacket pack;
+};
 class CSeverSocket
 {
 public:
@@ -74,20 +88,23 @@ public:
 	// epoll监听数据传入的线程（只会提醒有数据传入，不会接收）
 	void EpollRecv_thead(int epoll_fd, void *arg);
 
+	// 发送数据给客户端
+	int SendMsg(int fd, const char *msg, size_t length);
+
 	// 关闭套接字
 	int CloseEpollfd(int number);
 	// 关闭服务端
 	void CloseSocket();
 
 private:
-	// 接收连接的入口线程
-	static void *AcceptClient_thread(void *arg);
-	// 接收连接的具体实现
-	int AcceptClien();
+	// // 接收连接的入口线程
+	// static void *AcceptClient_thread(void *arg);
+	// // 接收连接的具体实现
+	// int AcceptClien();
 	// 接收数据的线程入口
 	static void *RecvData_thead(void *arg);
 	// 接收线程的具体实现
-	int RecvData(int epoll_fd, int recv_fd, CThreadSafeQueue<CPacket> *taskQueue);
+	int RecvData(int epoll_fd, int recv_fd, CThreadSafeQueue<dataInQueue> *taskQueue);
 	// 安全的epollCtl
 	int EpollSafeCtrl(int epfd, int opera, int fd, struct epoll_event *__event);
 	// 安全的epollWait

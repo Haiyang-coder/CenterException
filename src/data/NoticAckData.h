@@ -10,7 +10,7 @@
 class CNotifyAckData : public DataInfoBase
 {
 public:
-    CNotifyAckData(); // 构造函数
+    CNotifyAckData(const char *jsonString); // 构造函数
 
     void DisplayData();                                   // 显示数据
     bool TurnStr2Obj(const char *jsonString);             // 将字符串转换成对象
