@@ -2,6 +2,7 @@
 
 CNotifyAckData::CNotifyAckData(const char *jsonString) : DataInfoBase(jsonString)
 {
+    tableName = "delete_NotifyAckError";
 }
 
 void CNotifyAckData::DisplayData()
@@ -14,7 +15,6 @@ void CNotifyAckData::DisplayData()
     std::cout << "  infoID: " << data.content.infoID << std::endl;
     std::cout << "  deleteNotifyAck: " << data.content.deleteNotifyAck << std::endl;
     std::cout << "  sourceDomainID: " << data.content.sourceDomainID << std::endl;
-
     std::cout << "  dictAck:" << std::endl;
     for (const auto &entry : data.content.dictAck)
     {
@@ -51,7 +51,7 @@ bool CNotifyAckData::TurnStr2Obj(const char *jsonString)
 void CNotifyAckData::GetInserDataInOrder(std::string &strData) const
 {
     std::stringstream ss;
-    ss << "INSERT INTO \"YOUR_DATABASE\".\"YOUR_TABLE\" ("
+    ss << "INSERT INTO \"" + modelName + "\".\"" + tableName + "\" ("
        << "systemID, systemIP, mainCMD, subCMD, evidenceID, msgVersion, submittime, "
        << "DataType, userID, infoID, deleteNotifyAck, sourceDomainID, "
        << "dictAck, deleteNotifyAckError, dataHash, datasign, randomidentification) VALUES ("

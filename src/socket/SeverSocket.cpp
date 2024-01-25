@@ -281,7 +281,7 @@ int CSeverSocket::RecvData(int epoll_fd, int recv_fd, CThreadSafeQueue<dataInQue
         else if (recv_len < 0)
         {
             // 处理读取的异常情况
-            if (EAGAIN || errno == EWOULDBLOCK)
+            if (errno == EWOULDBLOCK)
             {
                 // 没有更多数据可读，证明已经将所有的数据都读完了
                 break;
@@ -338,7 +338,7 @@ int CSeverSocket::RecvData(int epoll_fd, int recv_fd, CThreadSafeQueue<dataInQue
         }
     }
 
-    return SUCCESS;
+    return 0;
 }
 
 /// @brief 关epoll文件描述符

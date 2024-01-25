@@ -3,6 +3,7 @@
 CUnTrigerDelData::CUnTrigerDelData(const char *jsonString) : DataInfoBase(jsonString)
 
 {
+    tableName = "delete_RequestTriggerDiff";
 }
 
 void CUnTrigerDelData::DisplayData()
@@ -28,7 +29,7 @@ bool CUnTrigerDelData::TurnStr2Obj(const char *jsonString)
 void CUnTrigerDelData::GetInserDataInOrder(std::string &strData) const
 {
     // 拼接插入数据库的SQL语句，具体实现根据数据库类型和表结构进行调整
-    strData = "INSERT INTO  \"YOUR_DATABASE\".\"YOUR_TABLE\" (";
+    strData = "INSERT INTO  \"" + modelName + "\".\"" + tableName + "\" (";
     strData += "systemID, systemIP, mainCMD, subCMD, evidenceID, msgVersion, submittime, ";
     strData += "infoID, deleteRequest, deleteTriggers, deleteRequestTriggerDiff, ";
     strData += "dataHash, datasign, randomidentification";

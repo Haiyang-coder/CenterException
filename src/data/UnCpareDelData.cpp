@@ -2,6 +2,7 @@
 
 CUnCpareDelData::CUnCpareDelData(const char *jsonString) : DataInfoBase(jsonString)
 {
+    tableName = "delete_IntentiongRequestDiff";
 }
 
 void CUnCpareDelData::DisplayData()
@@ -31,7 +32,7 @@ bool CUnCpareDelData::TurnStr2Obj(const char *jsonString)
 void CUnCpareDelData::GetInserDataInOrder(std::string &strData) const
 {
     std::stringstream ss;
-    ss << "INSERT INTO \"YOUR_DATABASE\".\"YOUR_TABLE\" ("
+    ss << "INSERT INTO \"" + modelName + "\".\"" + tableName + "\" ("
        << "systemID, systemIP, mainCMD, subCMD, evidenceID, msgVersion, submittime, "
        << "DataType, infoID, deleteIntention, deleteRequest, deleteIntentiongRequestDiff, "
        << "dataHash, datasign, randomidentification) VALUES ("

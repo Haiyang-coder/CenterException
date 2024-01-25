@@ -2,7 +2,7 @@
 #include "DMsql.h"
  
 
-#define DPIRETURN_CHECK(rt,hndl_type,hndl) if(!DSQL_SUCCEEDED(rt)){dpi_err_msg_print(hndl_type,hndl);return rt;}
+#define DPIRETURN_CHECK(rt,hndl_type,hndl) if(!DSQL_SUCCEEDED(rt)){dpi_err_msg_print(hndl_type,hndl);}
 /*********************************************************************
 * 功能:
 *		打印错误信息
@@ -438,6 +438,17 @@ DPIRETURN databaseExecuteDirect(DMStmt *stDmStmt, const char* sqlStr)
 
     //执行SQL
     rt = dpi_exec_direct(stDmStmt->hstmt, (sdbyte *)sqlStr);
+	//获取错误信息集合，并打印 
+	if(rt < 0)
+	{
+		sdint4 errCode; //错误代码
+		sdint2 msgLen;  //消息长度
+		sdbyte errMsg[SDBYTE_MAX]; //错误消息
+		dpi_get_diag_rec(DSQL_HANDLE_STMT, stDmStmt->hstmt, 1, &errCode, errMsg, sizeof(errMsg), &msgLen);
+		 DPIRETURN_CHECK(rt, DSQL_HANDLE_STMT, stDmStmt->hstmt);
+	 	return errCode;
+	}
+	
     DPIRETURN_CHECK(rt, DSQL_HANDLE_STMT, stDmStmt->hstmt);
     return rt;
 }

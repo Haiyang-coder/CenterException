@@ -9,11 +9,16 @@ CXX:=g++
 #.c或.cpp文件所在的各个文件夹
 SRCS := $(wildcard *.c)
 SRCS += $(wildcard data/*.cpp)
+SRCS += $(wildcard dm/*.cpp)
+SRCS += $(wildcard dm/*.c)
+SRCS += $(wildcard simpleIni/*.c)
+SRCS += $(wildcard socket/*.cpp)
+SRCS += $(wildcard ftp/*.cpp)
 SRCS += $(wildcard *.cpp)
 SRCS += $(wildcard ThreadPool/*.cpp)
 
 #.h头文件所在的各个文件夹
-INCS:= -I ../include -I ../include/json -I ../include/simpleIni -I ../include/DM -I /root/CenterExceptional/fineftp-server/fineftp-server/include -I /root/CenterExceptional/fineftp-server/_build/fineftp-server/include
+INCS:= -I ../include -I ../include/json -I ../include/simpleIni -I ../include/DM -I ../fineftp-server/fineftp-server/include -I ../fineftp-server/_build/fineftp-server/include -I ./data -I ./dm -I ./ftp -I ./simpleIni -I ./socket -I ./ThreadPool -I ./tools
 
 #各个文件夹下的.c和.cpp替换为.o文件
 OBJ:=$(SRCS:.c=.o)

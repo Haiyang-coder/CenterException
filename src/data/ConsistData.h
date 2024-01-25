@@ -4,6 +4,7 @@
 #include <string>
 #include "DataInfoBase.h"
 
+// 删除效果评测系统上报数据格式（删除一致性无效异常数据存证信息0x4224）
 class CConsistData : public DataInfoBase
 {
 public:

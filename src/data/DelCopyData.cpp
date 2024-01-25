@@ -2,6 +2,7 @@
 
 CDelCopyData::CDelCopyData(const char *jsonString) : DataInfoBase(jsonString)
 {
+    tableName = "delete_DupFail";
 }
 
 void CDelCopyData::DisplayData()
@@ -10,7 +11,7 @@ void CDelCopyData::DisplayData()
 
     std::cout << "数据:" << std::endl;
     std::cout << "  DataType: " << data.DataType << std::endl;
-    std::cout << "  infoID: " << data.content.infoID << std::endl;
+    std::cout << "  infoID: " << data.content.globalID << std::endl;
     std::cout << "  deleteInstruction: " << data.content.deleteInstruction << std::endl;
     std::cout << "  deletePerformer: " << data.content.deletePerformer << std::endl;
     std::cout << "  deletePerformTime: " << data.content.deletePerformTime << std::endl;
@@ -24,7 +25,7 @@ bool CDelCopyData::TurnStr2Obj(const char *jsonString)
     const Json::Value &jsonData = root["data"];
     data.DataType = jsonData.isMember("DataType") ? jsonData["DataType"].asUInt() : 0;
     const Json::Value &content = jsonData["content"];
-    data.content.infoID = content.isMember("infoID") ? content["infoID"].asString() : "";
+    data.content.globalID = content.isMember("globalID") ? content["globalID"].asString() : "";
     data.content.deleteInstruction = content.isMember("deleteInstruction") ? content["deleteInstruction"].asString() : "";
     data.content.deletePerformer = content.isMember("deletePerformer") ? content["deletePerformer"].asString() : "";
     data.content.deletePerformTime = content.isMember("deletePerformTime") ? content["deletePerformTime"].asString() : "";
@@ -36,9 +37,9 @@ bool CDelCopyData::TurnStr2Obj(const char *jsonString)
 void CDelCopyData::GetInserDataInOrder(std::string &strData) const
 {
     std::stringstream ss;
-    ss << "INSERT INTO \"YOUR_DATABASE\".\"YOUR_TABLE\" ("
+    ss << "INSERT INTO \"" + modelName + "\".\"" + tableName + "\" ("
        << "systemID, systemIP, mainCMD, subCMD, evidenceID, msgVersion, submittime, "
-       << "DataType, infoID, deleteInstruction, deletePerformer, deletePerformTime, deleteControlSet, deleteDupResult, "
+       << "DataType, globalID, deleteInstruction, deletePerformer, deletePerformTime, deleteControlSet, deleteDupResult, "
        << "dataHash, datasign, randomidentification) VALUES ("
        << systemID << ", "
        << "'" << systemIP << "', "
@@ -48,7 +49,7 @@ void CDelCopyData::GetInserDataInOrder(std::string &strData) const
        << msgVersion << ", "
        << "'" << submittime << "', "
        << data.DataType << ", "
-       << "'" << data.content.infoID << "', "
+       << "'" << data.content.globalID << "', "
        << "'" << data.content.deleteInstruction << "', "
        << "'" << data.content.deletePerformer << "', "
        << "'" << data.content.deletePerformTime << "', "

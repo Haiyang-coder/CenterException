@@ -2,7 +2,7 @@
 #include <string>
 #include "json.h"
 #include <iostream>
-#include "../LogPrint.h"
+#include "../tools/LogPrint.h"
 
 class DataInfoBase
 {
@@ -16,10 +16,11 @@ public:
     // 将json字符串转成对象（赋值）
     virtual bool TurnStr2Obj(const char *jsonString) = 0;
     // 获取整个类的插入语句
-    virtual void GetInserDataInOrder(std::string &strData) const = 0;
+    virtual void GetInserDataInOrder(std::string &strData) const;
 
 protected:
     void DisPlayCommonData();
+    const std::string &GetTableName();
 
 private:
     // 将json数据中 的公共部分赋值
@@ -39,10 +40,15 @@ public:
     std::string dataHash;
     std::string datasign;
     std::string randomidentification;
+    std::string data;
 
 protected:
     // json字符串读取
     Json::CharReaderBuilder reader;
     // 读取字符串后构建的root节点
     Json::Value root;
+    // 表名
+    std::string tableName;
+    // 模式名
+    std::string modelName = "TEST_EXCEPTION";
 };

@@ -6,7 +6,7 @@
 #include <map>
 #include "DataInfoBase.h"
 
-// 删除数据异常类
+// 确定性删除系统上报数据格式0x4120
 class CDelData : public DataInfoBase
 {
 public:

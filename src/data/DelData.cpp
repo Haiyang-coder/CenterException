@@ -2,6 +2,7 @@
 
 CDelData::CDelData(const char *jsonString) : DataInfoBase(jsonString)
 {
+    tableName = "delete_UnOrder";
     data.DataType = 0;
     data.content.infoID = "";
     data.content.deleteInstruction = "";
@@ -37,7 +38,7 @@ bool CDelData::TurnStr2Obj(const char *jsonString)
 void CDelData::GetInserDataInOrder(std::string &strData) const
 {
     std::stringstream ss;
-    ss << "INSERT INTO \"YOUR_DATABASE\".\"YOUR_TABLE\" ("
+    ss << "INSERT INTO \"" + modelName + "\".\"" + tableName + "\" ("
        << "systemID, systemIP, mainCMD, subCMD, evidenceID, msgVersion, submittime, "
        << "DataType, infoID, deleteInstruction, deletePerformer, deletePerformTime, timeout, "
        << "dataHash, datasign, randomidentification) VALUES ("

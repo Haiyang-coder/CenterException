@@ -3,6 +3,7 @@
 
 UnRecoverable::UnRecoverable(const char *jsonString) : DataInfoBase(jsonString)
 {
+    tableName = "delete_AlgStandardIrrecoverableDiff";
 }
 
 void UnRecoverable::DisplayData()
@@ -32,7 +33,7 @@ bool UnRecoverable::TurnStr2Obj(const char *jsonString)
 
 void UnRecoverable::GetInserDataInOrder(std::string &strData) const
 {
-    strData = "INSERT INTO YourTableNameHere (systemID, systemIP, mainCMD, subCMD, evidenceID, msgVersion, submittime, DataType, infoID, deleteDupInfoID, deleteAlg, deleteAlgParam, Standard, deleteAlgStandardIrrecoverableDiff, dataHash, datasign, randomidentification) VALUES ('" +
+    strData = "INSERT INTO \"" + modelName + "\".\"" + tableName + "\" (systemID, systemIP, mainCMD, subCMD, evidenceID, msgVersion, submittime, DataType, infoID, deleteDupInfoID, deleteAlg, deleteAlgParam, Standard, deleteAlgStandardIrrecoverableDiff, dataHash, datasign, randomidentification) VALUES ('" +
               std::to_string(systemID) + "', '" + systemIP + "', '" + std::to_string(mainCMD) + "', '" + std::to_string(subCMD) + "', '" + evidenceID + "', '" + std::to_string(msgVersion) + "', '" + submittime + "', '" + std::to_string(data.DataType) + "', '" +
               data.content.infoID + "', '" + data.content.deleteDupInfoID + "', '" + (data.content.deleteAlg) + "', '" + data.content.deleteAlgParam + "', '" + data.content.Standard + "', '" + data.content.deleteAlgStandardIrrecoverableDiff + "', '" +
               dataHash + "', '" + datasign + "', '" + randomidentification + "');";

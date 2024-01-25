@@ -5,14 +5,17 @@
 #include "cmdresult.h"
 #include <utility>
 #include <string>
-#include "SimpleIni.h"
-#include "LogPrint.h"
+#include "../simpleIni/SimpleIni.h"
 #include "DbData.h"
 #include <fstream>
 #include <sys/stat.h>
+#include <iostream>
+#include "unistd.h"
 extern "C"
 {
 #include "DMsql.h"
+
+#include "../tools/LogPrint.h"
 }
 
 #define PATH_DATABASE_CONFIG "/root/CenterExceptional/config/db_config.ini" // 数据库配置文件的地址
@@ -38,8 +41,10 @@ public:
     int SavaDataAsCsv(const CDbData &dataAll, std::string fullName);
 
 private:
-    // 绑定要执行的sql语句
-    int BindSql2Exe(DMStmt &stDmStmt, const char *sql);
+    // 绑定要执行的sql语句 PREPARE模式
+    int BindSql2Exe(DMStmt *stDmStmt, const char *sql);
+    // 绑定要执行的sql语句 NO PREPARE模式
+    int BindSql2ExeEx(DMStmt *stDmStmt, const char *sql);
     // 执行绑定的sql语句并获得数据
     int GetDataByExcuteSql(DMStmt *stDmStmt);
     //  获取节内的配置项的值(int)

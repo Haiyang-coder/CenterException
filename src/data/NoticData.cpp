@@ -2,12 +2,12 @@
 
 CNoticData::CNoticData(const char *jsonString) : DataInfoBase(jsonString)
 {
+    tableName = "delete_NotificationConfirmationDiff";
 }
 
 void CNoticData::DisplayData()
 {
     DisPlayCommonData();
-
     std::cout << "数据:" << std::endl;
     std::cout << "  DataType: " << data.DataType << std::endl;
     std::cout << "  userID: " << data.content.userID << std::endl;
@@ -45,7 +45,7 @@ bool CNoticData::TurnStr2Obj(const char *jsonString)
 void CNoticData::GetInserDataInOrder(std::string &strData) const
 {
     std::stringstream ss;
-    ss << "INSERT INTO \"YOUR_DATABASE\".\"YOUR_TABLE\" ("
+    ss << "INSERT INTO \"" + modelName + "\".\"" + tableName + "\" ("
        << "systemID, systemIP, mainCMD, subCMD, evidenceID, msgVersion, submittime, "
        << "DataType, userID, infoID, sourceDomainID, nextDomainID, lastDomainID, "
        << "deleteMethod, deleteDomainSet, deleteNotify, deleteNotifyCreateTime, deleteNotifyError, "

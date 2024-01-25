@@ -7,6 +7,7 @@
 #include "json.h"
 #include "DataInfoBase.h"
 
+// 删除指令通知与确认系统4021
 class CNotifyAckData : public DataInfoBase
 {
 public:

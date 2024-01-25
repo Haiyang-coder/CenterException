@@ -1,35 +1,29 @@
-#include "SeverSocket.h"
+#include "./socket/SeverSocket.h"
 #include <vector>
 #include <system_error>
 #include "json.h"
 #include <fstream>
 #include <iostream>
-#include "SimpleIni.h"
+#include "./simpleIni/SimpleIni.h"
 #include <functional>
 #include <thread>
-#include <fineftp/server.h>
-#include "sqlGradoperate.h"
+#include "./dm/sqlGradoperate.h"
+#include "DealTask.h"
+#include "./ftp/ftpServer.h"
 
-#define D_WORK_THREADS_NUM 5
-#define TASK_QUEUE_MAX_SIZE 2048
-#ifdef WIN32
-const std::string local_root = "C:\\"; // The backslash at the end is necessary!
-#else                                  // WIN32
-const std::string local_root = "/dm8";
-#endif                                 // WIN32
 int main()
 {
-
-    // 初始化ftp服务器
-    fineftp::FtpServer server(212);
-    server.addUserAnonymous(local_root, fineftp::Permission::All);
-    server.addUser("MyUser", "MyPassword", local_root, fineftp::Permission::ReadOnly);
-    server.addUser("Uploader", "12345", local_root, fineftp::Permission::DirList | fineftp::Permission::DirCreate | fineftp::Permission::FileWrite | fineftp::Permission::FileAppend);
-    server.start(4);
-
+    // 开启ftp服务
+    Cftp ftpServer;
+    if (ftpServer.StartFtp() < 0)
+    {
+        perror("StartFtp function error!");
+        exit(-1);
+    }
+    pause();
     // 初始化线程安全的任务队列
     // 所有的请求都会放到这个队列中排队执行
-    CThreadSafeQueue<dataInQueue> taskQueue(TASK_QUEUE_MAX_SIZE);
+    CThreadSafeQueue<dataInQueue> taskQueue;
 
     //  初始化服务端的通信套接字
     CSeverSocket socket;
@@ -77,11 +71,12 @@ int main()
 
     // 初始化数据库
     CSqlGradOperate sqlOpera;
-    if (sqlOpera.InitDataBase() < 0)
+    if (sqlOpera.InitDMShemaAndTable() < 0)
     {
         PRINT_ERROR(-1, "初始化数据库失败，退出程序");
         exit(-1);
     }
+
     // 设置数据的全备份和增量备份
     if (sqlOpera.SetDbBackup() < 0)
     {
@@ -114,7 +109,6 @@ int main()
     }
     // 套接字的销毁
     socket.CloseSocket();
-    std::cout << "jieshu" << std::endl;
     LOG(LOG_DEBUG, "程序结束退出");
     return 0;
 }

@@ -5,7 +5,7 @@
 #include <string>
 #include "json.h"
 #include "DataInfoBase.h"
-
+// 删除效果评测系统
 class CUnCpareDelData : public DataInfoBase
 {
 public:

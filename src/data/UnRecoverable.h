@@ -3,7 +3,7 @@
 
 #include <string>
 #include "DataInfoBase.h"
-
+// 删除效果评测系统上报数据格式（删除副本不可恢复性异常数据存证信息0x4226）
 class UnRecoverable : public DataInfoBase
 {
 public:

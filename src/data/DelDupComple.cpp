@@ -3,6 +3,7 @@
 
 DelDupComple::DelDupComple(const char *jsonString) : DataInfoBase(jsonString)
 {
+    tableName = "delete_DupCompletenessDiff";
 }
 
 void DelDupComple::DisplayData()
@@ -30,7 +31,7 @@ bool DelDupComple::TurnStr2Obj(const char *jsonString)
 void DelDupComple::GetInserDataInOrder(std::string &strData) const
 {
     // 用于生成插入数据库的SQL语句的实现
-    strData = "INSERT INTO YourTableNameHere (systemID, systemIP, mainCMD, subCMD, evidenceID, msgVersion, submittime, DataType, infoID, deleteDupFailSet, deleteDupSuccSet, deleteDupCompletenessDiff, dataHash, datasign, randomidentification) VALUES ('" +
+    strData = "INSERT INTO \"" + modelName + "\".\"" + tableName + "\" (systemID, systemIP, mainCMD, subCMD, evidenceID, msgVersion, submittime, DataType, infoID, deleteDupFailSet, deleteDupSuccSet, deleteDupCompletenessDiff, dataHash, datasign, randomidentification) VALUES ('" +
               std::to_string(systemID) + "', '" + systemIP + "', '" + std::to_string(mainCMD) + "', '" + std::to_string(subCMD) + "', '" + evidenceID + "', '" + std::to_string(msgVersion) + "', '" + submittime + "', '" + std::to_string(data.DataType) + "', '" +
               data.content.infoID + "', '" + data.content.deleteDupFailSet + "', '" + data.content.deleteDupSuccSet + "', '" + data.content.deleteDupCompletenessDiff + "', '" + dataHash + "', '" + datasign + "', '" + randomidentification + "');";
 }

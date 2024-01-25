@@ -8,6 +8,7 @@ CDealTask::CDealTask(CThreadSafeQueue<dataInQueue> *taskQueue) : m_ptaskQueue(ta
         exit(ret);
     }
     m_filepath = m_systemIni.GetValue("ftp", "CSV_PATH", "/dm8/test");
+    InitVerTableName();
 }
 
 CDealTask::~CDealTask()
@@ -24,6 +25,14 @@ int CDealTask::StartDealTask()
 {
     // RAII开启一个线程
     m_thread = std::thread(&CDealTask::DealTaskThread, this);
+    return 0;
+}
+
+/// @brief 按照规定的时间将规定时间端内的数据放到指定的路径下
+/// @return
+int CDealTask::StartBackup()
+{
+
     return 0;
 }
 
@@ -45,27 +54,27 @@ int CDealTask::DealTaskThread()
             PRINT_ERROR(ret, "DecSm4Data 失败");
         }
         // 2. 将解密的数据转换成类
-        switch (pack.m_cmdType)
+        switch (pack.m_msgVersion)
         {
-        case 0x4120:
+        case 0x4120: // 确定性删除系统
         {
             CDelData jsonData(strDataDec.c_str());
             ret = jsonData.TurnStr2Obj(strDataDec.c_str());
             ret = SaveDataInDB(jsonData);
         }
-        case 0x4121:
+        case 0x4121: // 删除异常数据拷贝
         {
             CDelCopyData jsonData(strDataDec.c_str());
             ret = jsonData.TurnStr2Obj(strDataDec.c_str());
             ret = SaveDataInDB(jsonData);
         }
-        case 0x4020:
+        case 0x4020: // 删除指令通知与确认系统
         {
             CNoticData jsonData(strDataDec.c_str());
             ret = jsonData.TurnStr2Obj(strDataDec.c_str());
             ret = SaveDataInDB(jsonData);
         }
-        case 0x4021:
+        case 0x4021: // 删除指令通知与确认系统
         {
             CNotifyAckData jsonData(strDataDec.c_str());
             ret = jsonData.TurnStr2Obj(strDataDec.c_str());
@@ -123,26 +132,31 @@ int CDealTask::DealTaskThread()
         {
             CmpliDelFail jsonData(strDataDec.c_str());
             ret = jsonData.TurnStr2Obj(strDataDec.c_str());
-            ret = (jsonData);
+            ret = SaveDataInDB(jsonData);
         }
-        case 0x4300:
+        case 0x4300: // 定时备份数据
         {
             CDataQuery jsonData(strDataDec.c_str());
             ret = jsonData.TurnStr2Obj(strDataDec.c_str());
+            if (ret != 0)
+            {
+                PRINT_ERROR(ret, "CDataQuery,转换失败");
+                return ret;
+            }
+            auto it = m_mapTableName.find(jsonData.tableVersion);
+            if (it == m_mapTableName.end())
+            {
+                PRINT_ERROR(ret, "没有你想要查询的数据");
+                ret = -1;
+            }
+            else
+            {
+                SaveDataInFtp(it->second, jsonData.subtimeStart, jsonData.subtimeEnd);
+            }
         }
         default:
             LOG(LOG_ERROR, "不清楚的包来源和指令");
             break;
-        }
-
-        if (ret != SUCCESS)
-        {
-            PRINT_ERROR(ret, "TurnStr2Obj 失败");
-        }
-
-        if (ret < 0)
-        {
-            PRINT_ERROR(ret, "SaveDataInDB 失败");
         }
     }
     return 0;
@@ -239,4 +253,24 @@ int CDealTask::InitConfigReader()
         std::cout << "加载文件：" << SYSTEM_INI_FILE_PATH << "失败了" << std::endl;
         return ret;
     }
+}
+
+/// @brief 构建表名和version的映射关系
+/// @return
+int CDealTask::InitVerTableName()
+{
+    m_mapTableName[0x4120] = "delete_UnOrder";
+    m_mapTableName[0x4121] = "delete_DupFail";
+    m_mapTableName[0x4020] = "delete_NotificationConfirmationDiff";
+    m_mapTableName[0x4021] = "delete_NotifyAckError";
+    m_mapTableName[0x4221] = "delete_IntentiongRequestDiff";
+    m_mapTableName[0x4222] = "delete_RequestTriggerDiff";
+    m_mapTableName[0x4223] = "delete_NotificationConfirmationDiff";
+    m_mapTableName[0x4224] = "delete_ConsistencyDiff";
+    m_mapTableName[0x4225] = "delete_AlgStandardDiff";
+    m_mapTableName[0x4226] = "delete_AlgStandardIrrecoverableDiff";
+    m_mapTableName[0x4227] = "delete_AlgRetentionStatusDiff";
+    m_mapTableName[0x4228] = "delete_DupCompletenessDiff";
+    m_mapTableName[0x4229] = "delete_EffectEvaDomainSet";
+    return 0;
 }

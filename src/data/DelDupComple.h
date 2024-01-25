@@ -3,7 +3,7 @@
 
 #include <string>
 #include "DataInfoBase.h"
-
+// 删除效果评测系统上报数据格式（副本删除完备性异常数据存证信息0x4228）
 class DelDupComple : public DataInfoBase
 {
 public:

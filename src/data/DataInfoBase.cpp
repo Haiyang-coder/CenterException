@@ -30,19 +30,25 @@ void DataInfoBase::DisPlayCommonData()
   std::cout << "随机标识: " << randomidentification << std::endl;
 }
 
+const std::string &DataInfoBase::GetTableName()
+{
+  return tableName;
+}
+
 void DataInfoBase::SetCommonData()
 {
   // 内部方法用于将JSON值分配给对象成员
   systemID = root.get("systemID", 0).asInt();
-  systemIP = root.get("systemIP", "").asString();
+  systemIP = root.get("systemIP", "NULL").asString();
   mainCMD = root.get("mainCMD", 0).asInt();
   subCMD = root.get("subCMD", 0).asInt();
-  evidenceID = root.get("evidenceID", "").asString();
+  evidenceID = root.get("evidenceID", "NULL").asString();
   msgVersion = root.get("msgVersion", 0).asInt();
-  submittime = root.get("submittime", "").asString();
-  dataHash = root.get("dataHash", "").asString();
-  datasign = root.get("datasign", "").asString();
-  randomidentification = root.get("randomidentification", "").asString();
+  submittime = root.get("submittime", "NULL").asString();
+  dataHash = root.get("dataHash", "NULL").asString();
+  datasign = root.get("datasign", "NULL").asString();
+  randomidentification = root.get("randomidentification", "NULL").asString();
+  data = root.get("data", "NULL").asString();
 }
 
 bool DataInfoBase::InitJsonReader(const char *jsonString)
@@ -55,4 +61,26 @@ bool DataInfoBase::InitJsonReader(const char *jsonString)
     return ret;
   }
   return ret;
+}
+
+void DataInfoBase::GetInserDataInOrder(std::string &strData) const
+{
+  std::stringstream ss;
+  ss << "INSERT INTO \"" + modelName + "\".\"" + tableName + "\" ("
+     << "systemID, systemIP, mainCMD, subCMD, evidenceID, msgVersion, submittime, "
+     << "data,"
+     << "dataHash, datasign, randomidentification) VALUES ("
+     << systemID << ", "
+     << "'" << systemIP << "', "
+     << mainCMD << ", "
+     << subCMD << ", "
+     << "'" << evidenceID << "', "
+     << msgVersion << ", "
+     << "'" << submittime << "', "
+     << data << ", "
+     << "'" << dataHash << "', "
+     << "'" << datasign << "', "
+     << "'" << randomidentification << "');";
+  strData = ss.str();
+  std::cout << "要执行的sql:" << strData << std::endl;
 }

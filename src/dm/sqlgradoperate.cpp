@@ -1,7 +1,4 @@
 #include "sqlGradoperate.h"
-#include "unistd.h"
-#include <string>
-#include <iostream>
 
 CSqlGradOperate::CSqlGradOperate()
 {
@@ -19,6 +16,11 @@ CSqlGradOperate::CSqlGradOperate()
     }
     //  将配置文件中的配置保存起来
     m_pstIniHead = GetDatabaseConfigIni(PATH_DATABASE_CONFIG);
+    if (InitDataBase() < 0)
+    {
+        PRINT_ERROR(-1, "初始化数据库失败，退出程序");
+        exit(-1);
+    }
     m_path = m_systemIni.GetValue("ftp", "CSV_PATH", "/dm8/test");
 }
 
@@ -34,10 +36,10 @@ CSqlGradOperate::~CSqlGradOperate()
  **/
 unsigned int CSqlGradOperate::GetPageLines(const char *pageName, unsigned short &RowNumber)
 {
-    DMStmt stDmStmt;
+    DMStmt stDmStmt = {0};
     std::string strName(pageName);
     std::string acQuery = std::string("select count(*) from " + std::string((const char *)m_pstTableMap->aucSchema) + ".\"") + pageName + std::string("\"");
-    int iRet = BindSql2Exe(stDmStmt, acQuery.c_str());
+    int iRet = BindSql2Exe(&stDmStmt, acQuery.c_str());
     if (iRet != SH_LOD_SUCCESS)
     {
         return iRet;
@@ -71,10 +73,10 @@ unsigned int CSqlGradOperate::GetPageLines(const char *pageName, unsigned short 
 unsigned int CSqlGradOperate::GetPageLinesLimitId(const char *PageName, const std::string &key,
                                                   const std::string &value, unsigned short &RowNumber)
 {
-    DMStmt stDmStmt;
+    DMStmt stDmStmt = {0};
     std::string strName(PageName);
     std::string acQuery = std::string("select count(*) from " + std::string((const char *)m_pstTableMap->aucSchema) + ".\"") + PageName + std::string("\"") + " where " + key + "= " + value;
-    int iRet = BindSql2Exe(stDmStmt, acQuery.c_str());
+    int iRet = BindSql2Exe(&stDmStmt, acQuery.c_str());
     if (iRet != SH_LOD_SUCCESS)
     {
         return iRet;
@@ -147,13 +149,12 @@ int CSqlGradOperate::IniDM8SchemaTable()
     sprintf(acSqlCheckSchemaStr, "select t.name from sysobjects t where t.type$='SCH' and t.name='%s';", m_pstTableMap->aucSchema);
     do
     {
-        iRet = BindSql2Exe(stDmCheckSchemaHdl, (const char *)acSqlCheckSchemaStr);
+        iRet = BindSql2Exe(&stDmCheckSchemaHdl, (const char *)acSqlCheckSchemaStr);
         if (0 != iRet)
         {
             std::cout << "数据库 执行错误 BindSql2Exe" << std::endl;
             break;
         }
-
         if (DSQL_SUCCESS != databaseBindColumn(&stDmCheckSchemaHdl, 1, DSQL_C_NCHAR, acGetDmSchemaName, D_NSP_PDCSMCS_TICS_BUF_LEN + 1, &llDmSchemaLen))
         {
             std::cout << "数据库 执行错误 databaseBindColumn" << std::endl;
@@ -212,7 +213,7 @@ int CSqlGradOperate::IniDM8SchemaTable()
 
             do
             {
-                iRet = BindSql2Exe(stDmCheckTableHdl, acSqlCheckTableStr);
+                iRet = BindSql2Exe(&stDmCheckTableHdl, acSqlCheckTableStr);
                 if (0 != iRet)
                 {
                     std::cout << "数据库执行语句错误:" << std::endl;
@@ -269,7 +270,7 @@ int CSqlGradOperate::IniDM8SchemaTable()
 
                     do
                     {
-                        iRet = BindSql2Exe(stDmCheckColumnHdl, acSqlCheckColumnStr);
+                        iRet = BindSql2Exe(&stDmCheckColumnHdl, acSqlCheckColumnStr);
                         if (0 != iRet)
                         {
                             std::cout << "数据库执行语句错误:" << std::endl;
@@ -304,7 +305,7 @@ int CSqlGradOperate::IniDM8SchemaTable()
                         sprintf(acAlertColumnSql, "alter table \"%s\".\"%s\" add column(%s %s);", m_pstTableMap->aucSchema, m_pstTableMap->pstTable[i]->aucTableName, m_pstTableMap->pstTable[i]->astMap[j].aucColumnName, m_pstTableMap->pstTable[i]->astMap[j].aucType);
                         std::cout << "acAlertColumnSql:" << acAlertColumnSql << std::endl;
 
-                        iRet = BindSql2Exe(stAlertColumnHdl, acAlertColumnSql);
+                        iRet = BindSql2Exe(&stAlertColumnHdl, acAlertColumnSql);
                         if (0 != iRet)
                         {
                             std::cout << "数据库执行语句错误:" << std::endl;
@@ -341,7 +342,7 @@ int CSqlGradOperate::CreateSchema()
     std::cout << "acSqlString 创建模式的语句是：" << acSqlStr << std::endl;
 
     // 执行sql语句
-    int iRet = BindSql2Exe(stDmHdl, acSqlStr);
+    int iRet = BindSql2Exe(&stDmHdl, acSqlStr);
     if (0 != iRet)
     {
         std::cout << "数据库执行语句错误" << std::endl;
@@ -393,7 +394,7 @@ int CSqlGradOperate::CreateTable(int i)
     std::cout << "pcSqlStr:" << pcSqlStr << std::endl;
 
     // 执行sql语句
-    iRet = BindSql2Exe(stDmHdlCreateTable, pcSqlStr);
+    iRet = BindSql2Exe(&stDmHdlCreateTable, pcSqlStr);
     if (0 != iRet)
     {
         std::cout << "数据库执行语句错误:" << std::endl;
@@ -540,7 +541,7 @@ St_NSP_PDCSMCS_SectionIni *CSqlGradOperate::GetDbSection(St_NSP_PDCSMCS_SectionI
  * 返回值：
  *		@int[out]:0成功 其他失败
  **/
-int CSqlGradOperate::BindSql2Exe(DMStmt &stDmStmt, const char *sql)
+int CSqlGradOperate::BindSql2Exe(DMStmt *stDmStmt, const char *sql)
 {
     int iRet = 0; // 返回值
     if (m_stDMConnect.conFlag != 1)
@@ -557,35 +558,64 @@ int CSqlGradOperate::BindSql2Exe(DMStmt &stDmStmt, const char *sql)
         }
     }
     // get the handle
-    if (dm_alloc_stmt(&m_stDMConnect, &stDmStmt) < 0)
+    if (dm_alloc_stmt(&m_stDMConnect, stDmStmt) < 0)
     {
         // INFO_PRINT << "get the handle failed";
-        dm_free_stmt(&stDmStmt);
+        dm_free_stmt(stDmStmt);
         return SH_SQL_GETHANDLE_ERROR;
     }
 
     // bind the data
-    DPIRETURN ret = databasePrepare(&stDmStmt, const_cast<const char *>(sql));
+    DPIRETURN ret = databasePrepare(stDmStmt, const_cast<const char *>(sql));
     if (ret < 0)
     {
         // INFO_PRINT << "bind the data failed";
-        dm_free_stmt(&stDmStmt);
+        dm_free_stmt(stDmStmt);
         return ret;
     }
 
     // execute the sql
-    ret = databaseExecuteDirect(&stDmStmt, sql);
+    ret = databaseExecuteDirect(stDmStmt, sql);
     if (ret < 0)
     {
         // INFO_PRINT << "execute the sql failed";
-        dm_free_stmt(&stDmStmt);
+        dm_free_stmt(stDmStmt);
         return ret;
     }
+    return SH_LOD_SUCCESS;
+}
 
-    // 释放语句句柄
-    if (dm_free_stmt(&stDmStmt) != 0)
+int CSqlGradOperate::BindSql2ExeEx(DMStmt *stDmStmt, const char *sql)
+{
+    int iRet = 0; // 返回值
+    if (m_stDMConnect.conFlag != 1)
     {
-        return -D_NSP_PDCSMCS_TICS_DATABASE_FREE_FAIL_ERR;
+        // 没有连接到数据库
+        std::cout << "连接句柄有误：没有连接数据库" << std::endl;
+        // 初始化数据库操作
+        std::cout << "reconnect to dm..." << std::endl;
+        iRet = ConnectToDM();
+        if (0 != iRet)
+        {
+            std::cout << "重新连接数据库失败" << std::endl;
+            return -1;
+        }
+    }
+    // get the handle
+    if (dm_alloc_stmt(&m_stDMConnect, stDmStmt) < 0)
+    {
+        // INFO_PRINT << "get the handle failed";
+        dm_free_stmt(stDmStmt);
+        return SH_SQL_GETHANDLE_ERROR;
+    }
+
+    // execute the sql
+    int ret = databaseExecuteDirect(stDmStmt, sql);
+    if (ret < 0)
+    {
+        // INFO_PRINT << "execute the sql failed";
+        dm_free_stmt(stDmStmt);
+        return ret;
     }
     return SH_LOD_SUCCESS;
 }
@@ -605,8 +635,8 @@ int CSqlGradOperate::BindSql2Exe(DMStmt &stDmStmt, const char *sql)
  * */
 int CSqlGradOperate::DataInsert(const char *pcQuery)
 {
-    DMStmt stDmStmt;
-    int ret = BindSql2Exe(stDmStmt, pcQuery);
+    DMStmt stDmStmt = {0};
+    int ret = BindSql2Exe(&stDmStmt, pcQuery);
     return ret;
 }
 
@@ -653,7 +683,7 @@ int CSqlGradOperate::GetDataBySubmitTime(const char *tableName, const char *time
     std::string ccSqlselectAll;
     GetSqlByTime(tableName, timeStart, timeEnd, ccSqlselectAll);
     // 执行查询语句
-    int ret = BindSql2Exe(stDmStmt, ccSqlselectAll.c_str());
+    ret = BindSql2Exe(&stDmStmt, ccSqlselectAll.c_str());
     if (ret != SH_LOD_SUCCESS)
     {
         PRINT_ERROR(ret, "执行查询语句失败了");
@@ -687,7 +717,7 @@ int CSqlGradOperate::SavaDataAsCsv(const CDbData &dataAll, std::string fullName)
         if (mkdir(outputDir.c_str(), 0777) != 0)
         {
             std::cerr << "Error creating directory: " << outputDir << std::endl;
-            return;
+            return -2;
         }
     }
     // 打开文件操作流开始写入数据
@@ -874,7 +904,7 @@ int CSqlGradOperate::SetBackUpDB()
     DMStmt stDmStmt;
     // 1.将数据库设置为挂起状态
     std::string strSetMount = "alter database mount;";
-    ret = BindSql2Exe(stDmStmt, strSetMount.c_str());
+    ret = BindSql2ExeEx(&stDmStmt, strSetMount.c_str());
     if (ret < 0 && ret != -510)
     {
         LOG(LOG_ERROR, "将数据库设置为挂起状态 失败");
@@ -883,7 +913,7 @@ int CSqlGradOperate::SetBackUpDB()
 
     // 2.开启数据库的归档配置
     std::string strArchivelog = "alter database archivelog;";
-    ret = BindSql2Exe(stDmStmt, strArchivelog.c_str());
+    ret = BindSql2ExeEx(&stDmStmt, strArchivelog.c_str());
     if (ret < 0)
     {
         LOG(LOG_ERROR, "开启数据库的归档配置 失败");
@@ -893,7 +923,7 @@ int CSqlGradOperate::SetBackUpDB()
     // 3.配置数据库的归档参数
     std::string strPath = m_systemIni.GetValue("dbInfo", "BackUpLogDir", "/dm8/backupUnExcept");
     std::string strLogConfig = "alter database add archivelog 'type=local,dest=" + strPath + ",file_size=1024,space_limit=4096';";
-    ret = BindSql2Exe(stDmStmt, strArchivelog.c_str());
+    ret = BindSql2ExeEx(&stDmStmt, strArchivelog.c_str());
     if (ret < 0)
     {
         LOG(LOG_ERROR, "配置数据库的归档参数 失败");
@@ -902,7 +932,7 @@ int CSqlGradOperate::SetBackUpDB()
 
     // 4.修改回open状态
     std::string strSetOpen = "alter database open;";
-    ret = BindSql2Exe(stDmStmt, strSetOpen.c_str());
+    ret = BindSql2ExeEx(&stDmStmt, strSetOpen.c_str());
     if (ret < 0 && ret != -514)
     {
         LOG(LOG_ERROR, "修改回open状态 失败");
@@ -911,9 +941,13 @@ int CSqlGradOperate::SetBackUpDB()
 
     // 5.初始化作业环境
     strSetOpen = "SP_INIT_JOB_SYS(1)";
-    ret = BindSql2Exe(stDmStmt, strSetOpen.c_str());
-    if (ret < 0 && ret != -806)
+    ret = BindSql2ExeEx(&stDmStmt, strSetOpen.c_str());
+    if (ret < 0)
     {
+        if (ret == -806 || ret == -2124)
+        {
+            return 0;
+        }
         LOG(LOG_ERROR, "初始化作业环境 失败");
         return ret;
     }
@@ -930,39 +964,39 @@ int CSqlGradOperate::SetCompliBackUp()
     std::string strPath = m_systemIni.GetValue("dbInfo", "BackUpDir", "/dm8/backup");
 
     std::string sql = "call SP_CREATE_JOB('BackUp_center',1,0,'',0,0,'',0,'');";
-    ret = BindSql2Exe(stDmStmt, sql.c_str());
-    if (ret < 0 && ret != -8415)
+    ret = BindSql2ExeEx(&stDmStmt, sql.c_str());
+    if (ret < 0)
     {
-        if (ret == -8415)
+        if (ret == -8413)
         {
             LOG(LOG_DEBUG, "作业已经存在现在是更新作业");
-            return UpdateCompliBackUp();
+            return 0;
         }
         return ret;
     }
     sql = "call SP_JOB_CONFIG_START('BackUp_center');";
-    ret = BindSql2Exe(stDmStmt, sql.c_str());
+    ret = BindSql2ExeEx(&stDmStmt, sql.c_str());
     if (ret < 0)
     {
         return ret;
     }
 
     sql = "call SP_ADD_JOB_STEP('BackUp_center', 'BackUp_dm', 6, '00000000/" + strPath + "', 0, 0, 0, 0, NULL, 0);";
-    ret = BindSql2Exe(stDmStmt, sql.c_str());
+    ret = BindSql2ExeEx(&stDmStmt, sql.c_str());
     if (ret < 0)
     {
         return ret;
     }
 
     sql = "call SP_ADD_JOB_SCHEDULE('BackUp_center', 'test1', 1, 2, 1, 64, 0, '00:00:00', NULL, '2024-01-02 23:48:24', NULL, '');";
-    ret = BindSql2Exe(stDmStmt, sql.c_str());
+    ret = BindSql2ExeEx(&stDmStmt, sql.c_str());
     if (ret < 0)
     {
         return ret;
     }
 
     sql = "call SP_JOB_CONFIG_COMMIT('BackUp_center');";
-    ret = BindSql2Exe(stDmStmt, sql.c_str());
+    ret = BindSql2ExeEx(&stDmStmt, sql.c_str());
     if (ret < 0)
     {
         return ret;
@@ -980,40 +1014,40 @@ int CSqlGradOperate::SetAddBackUp()
     std::string strPath = m_systemIni.GetValue("dbInfo", "BackUpDir", "/dm8/backup");
 
     std::string sql = "call SP_CREATE_JOB('BackUp_Add',1,0,'',0,0,'',0,'');";
-    ret = BindSql2Exe(stDmStmt, sql.c_str());
+    ret = BindSql2ExeEx(&stDmStmt, sql.c_str());
     if (ret < 0)
     {
         if (ret == -8413)
         {
             // 已经有了这个全备份了，所以直接退出
-            return UpdateAddBackUp();
+            return 0;
         }
         return ret;
     }
 
     sql = "call SP_JOB_CONFIG_START('BackUp_Add');";
-    ret = BindSql2Exe(stDmStmt, sql.c_str());
+    ret = BindSql2ExeEx(&stDmStmt, sql.c_str());
     if (ret < 0)
     {
         return ret;
     }
 
     sql = "call SP_ADD_JOB_STEP('BackUp_Add', 'Add_test_buzhou', 6, '10000000" + strPath + "|" + strPathAdd + "', 0, 0, 0, 0, NULL, 0);";
-    ret = BindSql2Exe(stDmStmt, sql.c_str());
+    ret = BindSql2ExeEx(&stDmStmt, sql.c_str());
     if (ret < 0)
     {
         return ret;
     }
 
     sql = "call SP_ADD_JOB_SCHEDULE('BackUp_center', 'test1', 1, 2, 1, 64, 0, '00:00:00', NULL, '2024-01-02 23:48:24', NULL, '');";
-    ret = BindSql2Exe(stDmStmt, sql.c_str());
+    ret = BindSql2ExeEx(&stDmStmt, sql.c_str());
     if (ret < 0)
     {
         return ret;
     }
 
     sql = "call SP_JOB_CONFIG_COMMIT('BackUp_center');";
-    ret = BindSql2Exe(stDmStmt, sql.c_str());
+    ret = BindSql2ExeEx(&stDmStmt, sql.c_str());
     if (ret < 0)
     {
         return ret;
@@ -1025,17 +1059,9 @@ int CSqlGradOperate::UpdateCompliBackUp()
     int ret = 0;
     DMStmt stDmStmt;
     std::string strPath = m_systemIni.GetValue("dbInfo", "BackUpDir", "/dm8/backup");
-    return SUCCESS;
 
-    std::string sql = "call SP_JOB_CONFIG_START('BackUp_center');";
-    ret = BindSql2Exe(stDmStmt, sql.c_str());
-    if (ret < 0)
-    {
-        return ret;
-    }
-
-    sql = "call SP_ALTER_JOB_STEP('BackUp_center', 'BackUp_dm', 6, '00000000/" + strPath + "', 0, 0, 0, 0, NULL, 0);";
-    ret = BindSql2Exe(stDmStmt, sql.c_str());
+    std::string sql = "call SP_ALTER_JOB_STEP('BackUp_center', 'BackUp_dm', 6, '00000000/" + strPath + "', 0, 0, 0, 0, NULL, 0);";
+    ret = BindSql2ExeEx(&stDmStmt, sql.c_str());
     if (ret < 0)
     {
         return ret;
@@ -1052,14 +1078,14 @@ int CSqlGradOperate::UpdateAddBackUp()
     return SUCCESS;
 
     std::string sql = "call SP_JOB_CONFIG_START('BackUp_Add');";
-    ret = BindSql2Exe(stDmStmt, sql.c_str());
+    ret = BindSql2ExeEx(&stDmStmt, sql.c_str());
     if (ret < 0)
     {
         return ret;
     }
 
     sql = "call SP_ALTER_JOB_STEP('BackUp_Add', 'Add_test_buzhou', 6, '10000000" + strPath + "|" + strPathAdd + "', 0, 0, 0, 0, NULL, 0);";
-    ret = BindSql2Exe(stDmStmt, sql.c_str());
+    ret = BindSql2ExeEx(&stDmStmt, sql.c_str());
     if (ret < 0)
     {
         return ret;

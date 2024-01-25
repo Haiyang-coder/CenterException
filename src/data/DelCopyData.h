@@ -25,7 +25,7 @@ public:
         uint16_t DataType;
         struct Content
         {
-            std::string infoID;
+            std::string globalID;
             std::string deleteInstruction;
             std::string deletePerformer;
             std::string deletePerformTime;

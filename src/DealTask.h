@@ -1,13 +1,12 @@
 #pragma once
 
-#include "SimpleIni.h"
 #include <iostream>
-#include "SeverSocket.h"
+#include "./socket/SeverSocket.h"
 #include "./data/Packet.h"
 #include "./data/RequestJson.h"
-#include "sqlGradoperate.h"
-#include "LogPrint.h"
-#include "ThreadSafeQueue.h"
+#include "./dm/sqlGradoperate.h"
+#include "./tools/LogPrint.h"
+#include "./tools/ThreadSafeQueue.h"
 #include "./ThreadPool/ThreadPool.h"
 #include "./data/DelData.h"
 #include "./data/DelCopyData.h"
@@ -23,6 +22,7 @@
 #include "./data/DelDupComple.h"
 #include "./data/CmpliDelFail.h"
 #include "./data/DataQuery.h"
+#include "./simpleIni/SimpleIni.h"
 #define D_WORK_THREADS_MIN_NUM 5  // 最少工作线程数
 #define D_WORK_THREADS_MAX_NUM 15 // 最大工作线程数
 
@@ -45,14 +45,16 @@ public:
     ~CDealTask();
     // 开启任务处理线程
     int StartDealTask();
-    // 任务处理的具体实现
-    int DealTaskThread();
     // 设置用到的网络通信模块
     int SetSocket(CSeverSocket *socket);
     // 设置数据库操作模块
     int SetSqlCtl(CSqlGradOperate *pdbCtl);
 
 private:
+    // 任务处理的具体实现
+    int DealTaskThread();
+    // 开启数据备份线程
+    int StartBackup();
     // 解密加密的数据
     int DecSm4Data(const std::string &data, std::string &dataOut);
     // 将数据存到数据库中
@@ -61,13 +63,16 @@ private:
     int SaveDataInFtp(const std::string &tableName, const std::string &startTime, const std::string &EndTime);
     // 初始化配置文件读对象
     int InitConfigReader();
+    // 初始化version和表名的映射
+    int InitVerTableName();
 
 private:
     CThreadPool *m_pthreadPool;                  // 线程池
-    std::thread m_thread;                        // 队列管理线程，如果队列不满就会分配任务
+    std::thread m_thread;                        // 任务处理的线程
     CThreadSafeQueue<dataInQueue> *m_ptaskQueue; // 要处理的任务队列
     CSqlGradOperate *m_pdbCtl;                   // 对数据库进行操作
     CSeverSocket *m_psocket;                     // 用来发送数据
     std::string m_filepath;                      // ftp服务器的目录
     CSimpleIni m_systemIni;                      // 配置文件读取
+    std::map<short, std::string> m_mapTableName; // version和表名的映射
 };

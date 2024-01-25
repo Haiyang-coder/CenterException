@@ -6,6 +6,7 @@
 #include "json.h"
 #include "DataInfoBase.h"
 
+// 删除指令通知与确认系统上报数据格式0x4020
 class CNoticData : public DataInfoBase
 {
 public:

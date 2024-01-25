@@ -19,7 +19,7 @@ public:
 
 public:
     short getType;            // 用什么方式获取数据，0:tcp发包 1：在ftp服务器自己取
-    short tableIndex;         // 想要什么异常
+    short tableVersion;       // 想要什么异常
     std::string subtimeStart; // 开始时间
     std::string subtimeEnd;   // 结束时间
 };

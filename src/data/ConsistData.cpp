@@ -6,6 +6,7 @@
 
 CConsistData::CConsistData(const char *jsonString) : DataInfoBase(jsonString)
 {
+    tableName = "delete_ConsistencyDiff";
 }
 
 void CConsistData::DisplayData()
@@ -36,7 +37,7 @@ void CConsistData::GetInserDataInOrder(std::string &strData) const
     // 请根据你的数据库插入语句逻辑完善这个函数
     // 这里只是一个示例，实际上需要根据你的表结构和字段逐个添加
     std::stringstream ss;
-    ss << "INSERT INTO YourTable (systemID, systemIP, mainCMD, subCMD, evidenceID, msgVersion, submittime, DataType, infoID, deleteIntention, classifyInformation, deleteAlg, deleteConsistencyDiff, dataHash, datasign, randomidentification) VALUES ("
+    ss << "INSERT INTO  \"" + modelName + "\".\"" + tableName + "\" (systemID, systemIP, mainCMD, subCMD, evidenceID, msgVersion, submittime, DataType, infoID, deleteIntention, classifyInformation, deleteAlg, deleteConsistencyDiff, dataHash, datasign, randomidentification) VALUES ("
        << systemID << ", '" << systemIP << "', " << mainCMD << ", " << subCMD << ", '" << evidenceID << "', " << msgVersion << ", '" << submittime << "', " << data.DataType << ", '"
        << data.content.infoID << "', '" << data.content.deleteIntention << "', '" << data.content.classifyInformation << "', " << data.content.deleteAlg << ", '" << data.content.deleteConsistencyDiff
        << "', '" << dataHash << "', '" << datasign << "', '" << randomidentification << "');";

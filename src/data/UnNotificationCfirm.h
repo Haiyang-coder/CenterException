@@ -4,6 +4,7 @@
 #include <string>
 #include "DataInfoBase.h"
 
+// 删除效果评测系统上报数据格式（删除通知与确认完备性异常数据存证信息0x4223）
 class UnNotificationCfirm : public DataInfoBase
 {
 public:

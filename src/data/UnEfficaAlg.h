@@ -3,7 +3,7 @@
 
 #include <string>
 #include "DataInfoBase.h"
-
+// 删除效果评测系统上报数据格式（删除算法失效异常数据存证信息0x4227）
 class UnEfficaAlg : public DataInfoBase
 {
 public:

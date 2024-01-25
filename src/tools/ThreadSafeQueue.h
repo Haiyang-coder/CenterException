@@ -10,7 +10,9 @@ template <typename T>
 class CThreadSafeQueue
 {
 public:
-    CThreadSafeQueue(size_t capacity) : m_capacity(capacity), m_isDestroyed(false) {}
+    CThreadSafeQueue() : m_isDestroyed(false)
+    {
+    }
 
     // 生产者放入数据
     void push(const T &value)
@@ -55,6 +57,5 @@ private:
     std::queue<T> m_queue;
     std::mutex m_mutex;
     std::condition_variable m_notEmpty;
-    size_t m_capacity;
     bool m_isDestroyed;
 };

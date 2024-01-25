@@ -8,9 +8,9 @@
 #include <iostream>
 #include <chrono>
 #include <cstring>
-#include "SimpleIni.h"
-#include "../cmdresult.h"
+#include "../simpleIni/SimpleIni.h"
 
+#define SYSTEM_INI_FILE_PATH "/root/CenterExceptional/config/system_info.ini"
 class CThreadPool
 {
 public:

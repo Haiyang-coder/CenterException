@@ -3,6 +3,7 @@
 
 UnEfficaAlg::UnEfficaAlg(const char *jsonString) : DataInfoBase(jsonString)
 {
+    tableName = "delete_AlgRetentionStatusDiff";
 }
 
 void UnEfficaAlg::DisplayData()
@@ -32,7 +33,7 @@ bool UnEfficaAlg::TurnStr2Obj(const char *jsonString)
 void UnEfficaAlg::GetInserDataInOrder(std::string &strData) const
 {
     // 方法实现用于生成插入数据库的SQL语句
-    strData = "INSERT INTO YourTableNameHere (systemID, systemIP, mainCMD, subCMD, evidenceID, msgVersion, submittime, DataType, infoID, deleteAlg, deleteAlgParam, RetentionStatus, deleteAlgRetentionStatusDiff, dataHash, datasign, randomidentification) VALUES ('" +
+    strData = "INSERT INTO \"" + modelName + "\".\"" + tableName + "\" (systemID, systemIP, mainCMD, subCMD, evidenceID, msgVersion, submittime, DataType, infoID, deleteAlg, deleteAlgParam, RetentionStatus, deleteAlgRetentionStatusDiff, dataHash, datasign, randomidentification) VALUES ('" +
               std::to_string(systemID) + "', '" + systemIP + "', '" + std::to_string(mainCMD) + "', '" + std::to_string(subCMD) + "', '" + evidenceID + "', '" + std::to_string(msgVersion) + "', '" + submittime + "', '" + std::to_string(data.DataType) + "', '" +
               data.content.infoID + "', '" + std::to_string(data.content.deleteAlg) + "', '" + data.content.deleteAlgParam + "', '" + data.content.RetentionStatus + "', '" + data.content.deleteAlgRetentionStatusDiff + "', '" + dataHash + "', '" + datasign + "', '" +
               randomidentification + "');";
