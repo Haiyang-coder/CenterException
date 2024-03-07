@@ -1,7 +1,10 @@
 #pragma once
 #include <string>
 #include <vector>
-
+/**
+ * 查询数据库得到的数据都存放到这个类中
+ *
+ */
 class CDbRowData
 {
 public:
@@ -32,7 +35,7 @@ public:
     ~CDbData() {}
 
 public:
-    int iLineSize;                       // 总行数
+    long iLineSize;                      // 总行数
     int iClomuSize;                      // 总列数
     std::vector<std::string> vecCloName; // 所有列名
     std::vector<int> vecType;            // 每一列的数据类型 ： 2：整形 4：字符串

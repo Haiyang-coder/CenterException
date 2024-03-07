@@ -1,11 +1,13 @@
 #include "ftpServer.h"
+#include "muduo/base/Logging.h"
+#include "tools/Utils.h"
 
-Cftp::Cftp()
+Cftp::Cftp() : m_started(false), server(new fineftp::FtpServer(port))
 {
     int ret = InitConfigReader();
     if (ret < 0)
     {
-        PRINT_ERROR(ret, "初始化读配置文件的对象失败");
+        LOG_INFO << "初始化读配置文件的对象失败";
         exit(ret);
     }
     InitFtpServerInfo();
@@ -13,10 +15,7 @@ Cftp::Cftp()
 
 Cftp::~Cftp()
 {
-    if (server == NULL)
-    {
-        delete server;
-    }
+    m_started = false;
 }
 
 /// @brief 按照配置文件开启ftp服务器
@@ -24,12 +23,12 @@ Cftp::~Cftp()
 int Cftp::StartFtp()
 {
     // 初始化ftp服务器
-    server = new fineftp::FtpServer(port);
     server->addUserAnonymous(local_root, fineftp::Permission::All);
+    // 给了只读权限
     server->addUser(userName, password, local_root, fineftp::Permission::ReadOnly);
-    // server.addUser("Uploader", "12345", local_root, fineftp::Permission::DirList | fineftp::Permission::DirCreate | fineftp::Permission::FileWrite | fineftp::Permission::FileAppend);
-    if (server->start(4))
+    if (server->start(thread_number))
     {
+        m_started = true;
         return 0;
     }
     return -1;
@@ -38,9 +37,11 @@ int Cftp::StartFtp()
 void Cftp::InitFtpServerInfo()
 {
     port = std::stoi(m_systemIni.GetValue("ftp", "PORT", "21"));
-    local_root = m_systemIni.GetValue("ftp", "CSV_PATH", "/dm8");
+    local_root = m_systemIni.GetValue("ftp", "CSV_PATH", "/dm8/saveCsv");
+    utils::checkOrCreateDirectory(local_root);
     userName = m_systemIni.GetValue("ftp", "USER_NAME", "ftp_client");
     password = m_systemIni.GetValue("ftp", "PASSWORD", "12345");
+    thread_number = std::stoi(m_systemIni.GetValue("ftp", "Thread_number", "4"));
 }
 
 /// @brief 初始化读配置文件的对象

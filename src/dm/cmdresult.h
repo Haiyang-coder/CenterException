@@ -3,9 +3,6 @@
 #define SUCCESS 0
 #define FAILED -1
 
-// 总配置文件路径
-#define SYSTEM_INI_FILE_PATH "/root/CenterExceptional/config/system_info.ini"
-
 // conmmon use
 #define MAX_SIZE 1024
 
